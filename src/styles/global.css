@@ -1,0 +1,152 @@
+/* ============================================
+   Design tokens — change these to retheme the site
+   ============================================ */
+:root {
+  /* Color */
+  --bg: #0a0a0a;
+  --bg-elev: #0d0d0d;
+  --border: #1a1a1a;
+  --border-strong: #2a2a2a;
+
+  --text-primary: #fafafa;
+  --text-body: #ddd;
+  --text-muted: #999;
+  --text-dim: #666;
+  --text-faint: #555;
+
+  --accent: #f9a8d4;
+
+  /* Typography */
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Spacing */
+  --space-section: 7rem;
+  --space-page-x: 2rem;
+  --space-page-y: 2.5rem;
+  --content-max: 560px;
+  --label-col: 120px;
+  --gap-col: 2.5rem;
+
+  /* Misc */
+  --transition: 200ms ease;
+}
+
+/* ============================================
+   Reset
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, h1, h2, h3, p, ul, li {
+  margin: 0;
+  padding: 0;
+}
+
+ul { list-style: none; }
+img { max-width: 100%; display: block; }
+
+/* ============================================
+   Base
+   ============================================ */
+html {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+/* ============================================
+   Selection + scrollbar
+   ============================================ */
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+  transition: background var(--transition);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ============================================
+   Layout — page container
+   ============================================ */
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--space-page-y) var(--space-page-x) 4rem;
+}
+
+/* ============================================
+   Section pattern
+   Inline label + content column
+   ============================================ */
+.section {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-col);
+  margin-bottom: var(--space-section);
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--text-faint);
+  width: var(--label-col);
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+}
+
+.section-content {
+  flex: 1;
+  max-width: var(--content-max);
+  min-width: 0;
+}
+
+/* ============================================
+   Mobile — stack labels above content
+   ============================================ */
+@media (max-width: 720px) {
+  :root {
+    --space-section: 4rem;
+    --space-page-x: 1.5rem;
+  }
+
+  .section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .section-label {
+    width: auto;
+    padding-top: 0;
+  }
+
+  .section-content {
+    max-width: 100%;
+  }
+}

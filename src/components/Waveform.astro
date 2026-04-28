@@ -1,0 +1,108 @@
+---
+// 3-layer pink waveform. Slow ambient drift + cursor reactivity.
+---
+
+<div class="visual" data-waveform>
+  <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
+    <g stroke="currentColor" stroke-width="0.6" fill="none" class="waves">
+      <path class="wave wave-1" d="M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100" />
+      <path class="wave wave-2" d="M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100" />
+      <path class="wave wave-3" d="M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100" />
+    </g>
+    <g fill="currentColor" class="dots">
+      <circle cx="50" cy="100" r="1.8" />
+      <circle cx="125" cy="100" r="1.8" />
+      <circle cx="200" cy="100" r="1.8" />
+      <circle cx="275" cy="100" r="1.8" />
+      <circle cx="350" cy="100" r="1.8" />
+      <circle cx="425" cy="100" r="1.8" />
+      <circle cx="500" cy="100" r="1.8" />
+      <circle cx="575" cy="100" r="1.8" />
+      <circle cx="650" cy="100" r="1.8" />
+    </g>
+  </svg>
+</div>
+
+<script>
+  // Cursor-reactive: as the user moves the mouse over the waveform,
+  // the waves bend slightly toward the cursor's vertical position.
+  const visuals = document.querySelectorAll<HTMLElement>('[data-waveform]');
+
+  visuals.forEach((visual) => {
+    const waves = visual.querySelectorAll<SVGPathElement>('.wave');
+
+    visual.addEventListener('mousemove', (e) => {
+      const rect = visual.getBoundingClientRect();
+      const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+      const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+
+      // Map mouse Y to a wave amplitude offset (range: -40 to 40)
+      const offset = (yPercent - 50) * 0.8;
+      const cx = (xPercent / 100) * 700;
+
+      // Update each wave with a slight peak near cursor X
+      waves.forEach((wave, i) => {
+        const layerOffset = offset * (1 - i * 0.25);
+        const peak = 100 + layerOffset;
+        wave.setAttribute(
+          'd',
+          `M 0 100 Q ${cx - 87} ${peak}, ${cx} 100 T ${cx + 175} 100 T ${cx + 350} 100 T 700 100`
+        );
+      });
+    });
+
+    visual.addEventListener('mouseleave', () => {
+      // Reset to default wave shapes
+      const defaults = [
+        'M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100',
+        'M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100',
+        'M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100',
+      ];
+      waves.forEach((wave, i) => wave.setAttribute('d', defaults[i]));
+    });
+  });
+</script>
+
+<style>
+  .visual {
+    height: 200px;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    color: var(--accent);
+    margin-top: 2.5rem;
+  }
+
+  .visual svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Slow horizontal drift — runs constantly */
+  .wave {
+    transition: d 400ms ease-out;
+  }
+
+  .wave-1 { opacity: 0.85; animation: drift 12s ease-in-out infinite; }
+  .wave-2 { opacity: 0.55; animation: drift 14s ease-in-out infinite reverse; }
+  .wave-3 { opacity: 0.35; animation: drift 18s ease-in-out infinite; }
+
+  .dots {
+    opacity: 0.6;
+  }
+
+  @keyframes drift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-20px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wave { animation: none; }
+  }
+
+  @media (max-width: 720px) {
+    .visual { height: 140px; }
+  }
+</style>
