@@ -1,6 +1,4 @@
 ---
-// Reusable section wrapper.
-// Pass `label` for the small mono text on the left, `id` for anchor links.
 interface Props {
   label: string;
   id?: string;
@@ -10,7 +8,5 @@ const { label, id } = Astro.props;
 
 <section class="section" id={id}>
   <div class="section-label">{label}</div>
-  <div class="section-content">
-    <slot />
-  </div>
+  <slot />
 </section>

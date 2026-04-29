@@ -31,7 +31,7 @@ janae-site/
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── pages/
-│   │   └── index.astro       # Main page
+│   │   └── index.astro       # Main page — 4 sections: Intro, Work, Free Time, Now Playing
 │   └── styles/
 │       └── global.css        # Design tokens + base styles
 ├── astro.config.mjs

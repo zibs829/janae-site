@@ -3,10 +3,14 @@
    ============================================ */
 :root {
   /* Color */
+  --bg-page: #050505;
   --bg: #0a0a0a;
+  --bg-card: #0a0a0a;
   --bg-elev: #0d0d0d;
   --border: #1a1a1a;
   --border-strong: #2a2a2a;
+  --card-border: #1f1f1f;
+  --card-radius: 12px;
 
   --text-primary: #fafafa;
   --text-body: #ddd;
@@ -20,14 +24,6 @@
   --font-serif: 'Instrument Serif', Georgia, serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  /* Spacing */
-  --space-section: 7rem;
-  --space-page-x: 2rem;
-  --space-page-y: 2.5rem;
-  --content-max: 560px;
-  --label-col: 120px;
-  --gap-col: 2.5rem;
 
   /* Misc */
   --transition: 200ms ease;
@@ -50,7 +46,7 @@ img { max-width: 100%; display: block; }
    Base
    ============================================ */
 html {
-  background: var(--bg);
+  background: var(--bg-page);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -61,7 +57,8 @@ html {
 
 body {
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--bg-page);
+  padding: 2rem;
 }
 
 a {
@@ -92,23 +89,27 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* ============================================
-   Layout — page container
+   Layout — centered card
    ============================================ */
 .page {
-  max-width: 880px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: var(--space-page-y) var(--space-page-x) 4rem;
+  background: var(--bg-card);
+  border: 0.5px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: 4rem 3rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 /* ============================================
-   Section pattern
-   Inline label + content column
+   Section pattern — centered stacked
    ============================================ */
 .section {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--gap-col);
-  margin-bottom: var(--space-section);
+  margin-bottom: 6rem;
+  text-align: center;
 }
 
 .section-label {
@@ -116,37 +117,22 @@ a:hover {
   font-size: 11px;
   letter-spacing: 0.15em;
   color: var(--text-faint);
-  width: var(--label-col);
-  flex-shrink: 0;
-  padding-top: 0.5rem;
-}
-
-.section-content {
-  flex: 1;
-  max-width: var(--content-max);
-  min-width: 0;
+  margin-bottom: 2rem;
 }
 
 /* ============================================
-   Mobile — stack labels above content
+   Mobile
    ============================================ */
 @media (max-width: 720px) {
-  :root {
-    --space-section: 4rem;
-    --space-page-x: 1.5rem;
+  body {
+    padding: 1rem;
+  }
+
+  .page {
+    padding: 2.5rem 1.5rem;
   }
 
   .section {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .section-label {
-    width: auto;
-    padding-top: 0;
-  }
-
-  .section-content {
-    max-width: 100%;
+    margin-bottom: 4rem;
   }
 }

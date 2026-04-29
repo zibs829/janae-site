@@ -60,6 +60,35 @@
       ];
       waves.forEach((wave, i) => wave.setAttribute('d', defaults[i]));
     });
+
+    visual.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = visual.getBoundingClientRect();
+      const yPercent = ((touch.clientY - rect.top) / rect.height) * 100;
+      const xPercent = ((touch.clientX - rect.left) / rect.width) * 100;
+
+      const offset = (yPercent - 50) * 0.8;
+      const cx = (xPercent / 100) * 700;
+
+      waves.forEach((wave, i) => {
+        const layerOffset = offset * (1 - i * 0.25);
+        const peak = 100 + layerOffset;
+        wave.setAttribute(
+          'd',
+          `M 0 100 Q ${cx - 87} ${peak}, ${cx} 100 T ${cx + 175} 100 T ${cx + 350} 100 T 700 100`
+        );
+      });
+    }, { passive: false });
+
+    visual.addEventListener('touchend', () => {
+      const defaults = [
+        'M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100',
+        'M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100',
+        'M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100',
+      ];
+      waves.forEach((wave, i) => wave.setAttribute('d', defaults[i]));
+    });
   });
 </script>
 
@@ -72,6 +101,7 @@
     overflow: hidden;
     color: var(--accent);
     margin-top: 2.5rem;
+    touch-action: none;
   }
 
   .visual svg {
