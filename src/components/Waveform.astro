@@ -1,138 +1,313 @@
 ---
-// 3-layer pink waveform. Slow ambient drift + cursor reactivity.
+// Layered dark music waveform. Subtle audio-reactive feel with cursor interaction.
 ---
 
 <div class="visual" data-waveform>
   <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
-    <g stroke="currentColor" stroke-width="0.6" fill="none" class="waves">
-      <path class="wave wave-1" d="M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100" />
-      <path class="wave wave-2" d="M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100" />
-      <path class="wave wave-3" d="M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100" />
-    </g>
-    <g fill="currentColor" class="dots">
-      <circle cx="50" cy="100" r="1.8" />
-      <circle cx="125" cy="100" r="1.8" />
-      <circle cx="200" cy="100" r="1.8" />
-      <circle cx="275" cy="100" r="1.8" />
-      <circle cx="350" cy="100" r="1.8" />
-      <circle cx="425" cy="100" r="1.8" />
-      <circle cx="500" cy="100" r="1.8" />
-      <circle cx="575" cy="100" r="1.8" />
-      <circle cx="650" cy="100" r="1.8" />
-    </g>
+    <defs>
+      <linearGradient id="wave-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0" />
+        <stop offset="12%" stop-color="currentColor" stop-opacity="0.35" />
+        <stop offset="50%" stop-color="currentColor" stop-opacity="0.9" />
+        <stop offset="88%" stop-color="currentColor" stop-opacity="0.35" />
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+      </linearGradient>
+
+      <linearGradient id="wave-soft-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0" />
+        <stop offset="18%" stop-color="currentColor" stop-opacity="0.12" />
+        <stop offset="50%" stop-color="currentColor" stop-opacity="0.28" />
+        <stop offset="82%" stop-color="currentColor" stop-opacity="0.12" />
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <line class="centerline" x1="0" y1="100" x2="700" y2="100" />
+    <g class="beat-bars" data-beat-bars></g>
+    <g class="rulers" data-rulers></g>
+    <g class="ghost-waves" data-ghost-waves></g>
+    <g class="waves" data-waves></g>
+    <g class="dots" data-dots></g>
+    <g class="peaks" data-peaks></g>
   </svg>
 </div>
 
 <script>
-  // Cursor-reactive: as the user moves the mouse over the waveform,
-  // the waves bend slightly toward the cursor's vertical position.
-  const visuals = document.querySelectorAll<HTMLElement>('[data-waveform]');
+  (() => {
+    const visuals = document.querySelectorAll<HTMLElement>('[data-waveform]');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  visuals.forEach((visual) => {
-    const waves = visual.querySelectorAll<SVGPathElement>('.wave');
+    visuals.forEach((visual) => {
+      const wavesGroup = visual.querySelector<SVGGElement>('[data-waves]');
+      const ghostGroup = visual.querySelector<SVGGElement>('[data-ghost-waves]');
+      const dotsGroup = visual.querySelector<SVGGElement>('[data-dots]');
+      const rulersGroup = visual.querySelector<SVGGElement>('[data-rulers]');
+      const beatBarsGroup = visual.querySelector<SVGGElement>('[data-beat-bars]');
+      const peaksGroup = visual.querySelector<SVGGElement>('[data-peaks]');
 
-    visual.addEventListener('mousemove', (e) => {
-      const rect = visual.getBoundingClientRect();
-      const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
-      const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      if (!wavesGroup || !ghostGroup || !dotsGroup || !rulersGroup || !beatBarsGroup || !peaksGroup) return;
 
-      // Map mouse Y to a wave amplitude offset (range: -40 to 40)
-      const offset = (yPercent - 50) * 0.8;
-      const cx = (xPercent / 100) * 700;
+      const width = 700;
+      const height = 200;
+      const center = 100;
 
-      // Update each wave with a slight peak near cursor X
-      waves.forEach((wave, i) => {
-        const layerOffset = offset * (1 - i * 0.25);
-        const peak = 100 + layerOffset;
-        wave.setAttribute(
-          'd',
-          `M 0 100 Q ${cx - 87} ${peak}, ${cx} 100 T ${cx + 175} 100 T ${cx + 350} 100 T 700 100`
-        );
+      const layers = [
+        { amp: 34, freq: 1.05, phase: 0.2, speed: 0.28, opacity: 0.82, stroke: 0.62, pull: 0.62, radius: 96, drift: 0 },
+        { amp: 25, freq: 1.45, phase: 1.1, speed: -0.22, opacity: 0.58, stroke: 0.55, pull: -0.42, radius: 124, drift: 18 },
+        { amp: 18, freq: 1.95, phase: 2.5, speed: 0.2, opacity: 0.42, stroke: 0.5, pull: 0.36, radius: 78, drift: -14 },
+        { amp: 12, freq: 2.75, phase: 4.1, speed: -0.16, opacity: 0.28, stroke: 0.45, pull: -0.28, radius: 112, drift: 26 },
+        { amp: -14, freq: 2.35, phase: 1.9, speed: 0.18, opacity: 0.3, stroke: 0.45, pull: 0.3, radius: 88, drift: -24 },
+        { amp: -23, freq: 1.55, phase: 3.5, speed: -0.24, opacity: 0.45, stroke: 0.52, pull: -0.5, radius: 136, drift: 10 },
+        { amp: -32, freq: 1.12, phase: 5.0, speed: 0.25, opacity: 0.62, stroke: 0.58, pull: 0.54, radius: 104, drift: -8 },
+      ];
+
+      const pointer = {
+        x: width / 2,
+        y: center,
+        targetX: width / 2,
+        targetY: center,
+        active: 0,
+        targetActive: 0,
+      };
+
+      const beatShape = [18, 34, 22, 48, 26, 62, 30, 42, 20, 54, 24, 38];
+
+      for (let x = 22; x < width; x += 14) {
+        const bar = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        const beat = beatShape[Math.floor(x / 14) % beatShape.length];
+
+        bar.setAttribute('x1', String(x));
+        bar.setAttribute('x2', String(x));
+        bar.setAttribute('y1', String(center - beat * 0.5));
+        bar.setAttribute('y2', String(center + beat * 0.5));
+        bar.setAttribute('stroke', 'currentColor');
+        bar.setAttribute('stroke-width', x % 56 === 0 ? '0.65' : '0.42');
+        bar.setAttribute('vector-effect', 'non-scaling-stroke');
+        bar.setAttribute('opacity', x % 56 === 0 ? '0.18' : '0.08');
+
+        beatBarsGroup.appendChild(bar);
+      }
+
+      for (let x = 40; x < width; x += 40) {
+        const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        const tall = x % 120 === 0;
+
+        tick.setAttribute('x1', String(x));
+        tick.setAttribute('x2', String(x));
+        tick.setAttribute('y1', String(center - (tall ? 48 : 30)));
+        tick.setAttribute('y2', String(center + (tall ? 48 : 30)));
+        tick.setAttribute('stroke', 'currentColor');
+        tick.setAttribute('stroke-width', '0.45');
+        tick.setAttribute('vector-effect', 'non-scaling-stroke');
+        tick.setAttribute('opacity', tall ? '0.18' : '0.1');
+
+        rulersGroup.appendChild(tick);
+      }
+
+      const paths = layers.map((layer, index) => {
+        const ghost = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        ghost.setAttribute('stroke', 'url(#wave-soft-fade)');
+        ghost.setAttribute('stroke-width', String(layer.stroke * 5));
+        ghost.setAttribute('fill', 'none');
+        ghost.setAttribute('vector-effect', 'non-scaling-stroke');
+        ghost.setAttribute('opacity', String(layer.opacity * 0.25));
+        ghostGroup.appendChild(ghost);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('stroke', 'url(#wave-fade)');
+        path.setAttribute('stroke-width', String(layer.stroke));
+        path.setAttribute('fill', 'none');
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+        path.setAttribute('opacity', String(layer.opacity));
+        wavesGroup.appendChild(path);
+
+        return { path, ghost, index };
+      });
+
+      const dots = Array.from({ length: 17 }, (_, index) => {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+
+        dot.setAttribute('r', index % 4 === 0 ? '1.55' : '1.05');
+        dot.setAttribute('fill', 'currentColor');
+
+        dotsGroup.appendChild(dot);
+        return dot;
+      });
+
+      const peaks = Array.from({ length: 9 }, (_, index) => {
+        const peak = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+
+        peak.setAttribute('stroke', 'currentColor');
+        peak.setAttribute('stroke-width', '0.7');
+        peak.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        peaksGroup.appendChild(peak);
+        return peak;
+      });
+
+      const getY = (x: number, time: number, index: number) => {
+        const layer = layers[index];
+        const n = x / width;
+
+        const pointerX = pointer.x + layer.drift;
+        const distance = x - pointerX;
+        const pull = pointer.active * Math.exp(-Math.pow(distance / layer.radius, 2));
+
+        const main =
+          Math.sin(n * Math.PI * 2 * layer.freq + layer.phase + time * 0.00045 * layer.speed) *
+          layer.amp;
+
+        const harmonic =
+          Math.sin(n * Math.PI * 2 * (layer.freq * 2.4) - layer.phase + time * 0.00032) *
+          layer.amp *
+          0.22;
+
+        const tremolo =
+          Math.sin(n * Math.PI * 18 + time * 0.0007 + index) *
+          layer.amp *
+          0.075;
+
+        const verticalPull = (pointer.y - center) * pull * layer.pull;
+        const ripple = Math.sin(distance * 0.055 + time * 0.006 + index) * pull * 5;
+
+        return center + main + harmonic + tremolo + verticalPull + ripple;
+      };
+
+      const buildPath = (time: number, index: number) => {
+        const step = 18;
+        let d = `M 0 ${getY(0, time, index).toFixed(2)}`;
+
+        for (let x = step; x <= width; x += step) {
+          const cx = x - step / 2;
+          const cy = getY(cx, time, index);
+          const y = getY(x, time, index);
+
+          d += ` Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)}`;
+        }
+
+        return d;
+      };
+
+      const updatePointer = (clientX: number, clientY: number) => {
+        const rect = visual.getBoundingClientRect();
+
+        pointer.targetX = ((clientX - rect.left) / rect.width) * width;
+        pointer.targetY = ((clientY - rect.top) / rect.height) * height;
+        pointer.targetActive = 1;
+      };
+
+      visual.addEventListener('pointermove', (event) => updatePointer(event.clientX, event.clientY));
+      visual.addEventListener('pointerenter', () => {
+        pointer.targetActive = 1;
+      });
+      visual.addEventListener('pointerleave', () => {
+        pointer.targetActive = 0;
+        pointer.targetX = width / 2;
+        pointer.targetY = center;
+      });
+
+      let raf = 0;
+
+      const render = (time = 0) => {
+        pointer.x += (pointer.targetX - pointer.x) * 0.08;
+        pointer.y += (pointer.targetY - pointer.y) * 0.08;
+        pointer.active += (pointer.targetActive - pointer.active) * 0.08;
+
+        paths.forEach(({ path, ghost, index }) => {
+          const d = buildPath(time, index);
+
+          path.setAttribute('d', d);
+          ghost.setAttribute('d', d);
+        });
+
+        dots.forEach((dot, index) => {
+          const x = 42 + index * 38.5;
+          const y = getY(x, time, index % layers.length);
+
+          dot.setAttribute('cx', String(x));
+          dot.setAttribute('cy', y.toFixed(2));
+          dot.setAttribute('opacity', String(0.26 + Math.sin(time * 0.001 + index) * 0.08));
+        });
+
+        peaks.forEach((peak, index) => {
+          const x = 76 + index * 68;
+          const top = getY(x, time, index % layers.length);
+          const bottom = getY(x, time, (index + 4) % layers.length);
+
+          peak.setAttribute('x1', String(x));
+          peak.setAttribute('x2', String(x));
+          peak.setAttribute('y1', top.toFixed(2));
+          peak.setAttribute('y2', bottom.toFixed(2));
+          peak.setAttribute('opacity', String(0.1 + Math.abs(Math.sin(time * 0.0012 + index)) * 0.14));
+        });
+
+        if (!reducedMotion.matches) {
+          raf = requestAnimationFrame(render);
+        }
+      };
+
+      render();
+
+      reducedMotion.addEventListener('change', () => {
+        cancelAnimationFrame(raf);
+        render();
       });
     });
-
-    visual.addEventListener('mouseleave', () => {
-      // Reset to default wave shapes
-      const defaults = [
-        'M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100',
-        'M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100',
-        'M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100',
-      ];
-      waves.forEach((wave, i) => wave.setAttribute('d', defaults[i]));
-    });
-
-    visual.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = visual.getBoundingClientRect();
-      const yPercent = ((touch.clientY - rect.top) / rect.height) * 100;
-      const xPercent = ((touch.clientX - rect.left) / rect.width) * 100;
-
-      const offset = (yPercent - 50) * 0.8;
-      const cx = (xPercent / 100) * 700;
-
-      waves.forEach((wave, i) => {
-        const layerOffset = offset * (1 - i * 0.25);
-        const peak = 100 + layerOffset;
-        wave.setAttribute(
-          'd',
-          `M 0 100 Q ${cx - 87} ${peak}, ${cx} 100 T ${cx + 175} 100 T ${cx + 350} 100 T 700 100`
-        );
-      });
-    }, { passive: false });
-
-    visual.addEventListener('touchend', () => {
-      const defaults = [
-        'M 0 100 Q 87 60, 175 100 T 350 100 T 525 100 T 700 100',
-        'M 0 100 Q 87 80, 175 100 T 350 100 T 525 100 T 700 100',
-        'M 0 100 Q 87 120, 175 100 T 350 100 T 525 100 T 700 100',
-      ];
-      waves.forEach((wave, i) => wave.setAttribute('d', defaults[i]));
-    });
-  });
+  })();
 </script>
 
 <style>
   .visual {
     height: 200px;
+    margin-top: 2.5rem;
+    overflow: hidden;
+    color: var(--accent);
     background: var(--bg-elev);
     border: 0.5px solid var(--border);
     border-radius: 8px;
-    overflow: hidden;
-    color: var(--accent);
-    margin-top: 2.5rem;
     touch-action: none;
   }
 
   .visual svg {
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
   }
 
-  /* Slow horizontal drift — runs constantly */
-  .wave {
-    transition: d 400ms ease-out;
+  .centerline {
+    stroke: currentColor;
+    stroke-width: 0.45;
+    stroke-dasharray: 2 10;
+    opacity: 0.16;
+    vector-effect: non-scaling-stroke;
   }
 
-  .wave-1 { opacity: 0.85; animation: drift 12s ease-in-out infinite; }
-  .wave-2 { opacity: 0.55; animation: drift 14s ease-in-out infinite reverse; }
-  .wave-3 { opacity: 0.35; animation: drift 18s ease-in-out infinite; }
-
-  .dots {
-    opacity: 0.6;
+  .waves path,
+  .ghost-waves path,
+  .rulers line,
+  .beat-bars line,
+  .peaks line {
+    fill: none;
+    vector-effect: non-scaling-stroke;
   }
 
-  @keyframes drift {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(-20px); }
+  .ghost-waves path {
+    filter: blur(4px);
+  }
+
+  .dots circle {
+    fill: currentColor;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .wave { animation: none; }
+    .ghost-waves path {
+      filter: none;
+    }
   }
 
   @media (max-width: 720px) {
-    .visual { height: 140px; }
+    .visual {
+      height: 140px;
+    }
   }
 </style>
