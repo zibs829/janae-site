@@ -7,18 +7,28 @@
 </nav>
 
 <script>
-  // Live clock — updates every second, shows Central time
+  // Live clock — updates every second, uses user's local time & device preferences
   function updateClock() {
     const el = document.getElementById('clock');
     if (!el) return;
-    const time = new Date().toLocaleTimeString('en-US', {
-      hour12: false,
-      timeZone: 'America/Chicago',
+
+    const now = new Date();
+
+    const time = now.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      // no hour12 → lets device decide (better for mobile + international users)
     });
-    el.textContent = `${time} CT`;
+
+    el.textContent = time;
   }
-  updateClock();
-  setInterval(updateClock, 1000);
+
+  // Run only in browser (Astro-safe)
+  if (typeof window !== 'undefined') {
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
 </script>
 
 <style>
